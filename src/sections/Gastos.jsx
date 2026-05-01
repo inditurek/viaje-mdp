@@ -9,30 +9,28 @@ const CATEGORIAS = [
   { id: 'otro',        label: 'Otro',        emoji: '✨',  color: '#D4A0A0' },
 ]
 
+const TODOS_FILTROS = [{ id: 'todos', label: 'Todos', emoji: '🗂️', color: '#8B7355' }, ...CATEGORIAS]
+
 const EMPTY = {
   descripcion: '', monto: '', pagador: 'Indi',
   categoria: 'comida', division: '50/50',
   customIndi: '', customMati: '',
 }
 
-const LATO = { fontFamily: 'Lato, sans-serif' }
-const PLAYFAIR_I = { fontFamily: 'Playfair Display, serif', fontStyle: 'italic' }
-
 export default function Gastos() {
   const [gastos, setGastos] = useStorage('gastos', [])
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(EMPTY)
-  const [filtro, setFiltro] = useState('todos')
+  const [form, setForm]         = useState(EMPTY)
+  const [filtro, setFiltro]     = useState('todos')
 
   function agregar() {
     if (!form.descripcion || !form.monto) return
-    const monto = parseFloat(form.monto)
+    const monto    = parseFloat(form.monto)
     const parteIndi = form.division === '50/50' ? monto / 2 : parseFloat(form.customIndi) || 0
     const parteMati = form.division === '50/50' ? monto / 2 : parseFloat(form.customMati) || 0
     setGastos(prev => [{
-      id: Date.now(),
-      descripcion: form.descripcion,
-      monto, pagador: form.pagador, categoria: form.categoria,
+      id: Date.now(), descripcion: form.descripcion, monto,
+      pagador: form.pagador, categoria: form.categoria,
       parteIndi, parteMati,
       fecha: new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
     }, ...prev])
@@ -40,91 +38,120 @@ export default function Gastos() {
     setShowForm(false)
   }
 
-  const bal = gastos.reduce((a, g) => {
-    if (g.pagador === 'Indi') a.matiDebeAIndi += g.parteMati
-    else                      a.indiDebeAMati += g.parteIndi
-    return a
-  }, { matiDebeAIndi: 0, indiDebeAMati: 0 })
-  const dif = bal.matiDebeAIndi - bal.indiDebeAMati
+  const bal = gastos.reduce(
+    (a, g) => { if (g.pagador === 'Indi') a.matiDebeAIndi += g.parteMati; else a.indiDebeAMati += g.parteIndi; return a },
+    { matiDebeAIndi: 0, indiDebeAMati: 0 }
+  )
+  const dif      = bal.matiDebeAIndi - bal.indiDebeAMati
   const balTexto = dif > 0.01 ? `Mati le debe $${dif.toFixed(0)} a Indi`
-    : dif < -0.01 ? `Indi le debe $${Math.abs(dif).toFixed(0)} a Mati`
+    : dif < -0.01  ? `Indi le debe $${Math.abs(dif).toFixed(0)} a Mati`
     : '¡Están al día! 🎉'
 
   const filtrados = filtro === 'todos' ? gastos : gastos.filter(g => g.categoria === filtro)
 
-  return (
-    <div className="flex flex-col gap-5 py-5">
+  // Estilos reutilizables
+  const inputStyle = {
+    fontFamily: 'Lato, sans-serif',
+    border: '1.5px solid #D4C4B0', background: '#FAF6EF',
+    color: '#3D2B1F', borderRadius: 14, padding: '13px 18px',
+    width: '100%', outline: 'none', display: 'block',
+  }
 
-      {/* Balance */}
-      <div className="mx-4 rounded-2xl p-5" style={{ background: '#C4785A' }}>
-        <p style={{ ...LATO, color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Balance actual</p>
-        <p style={{ ...PLAYFAIR_I, color: 'white', fontSize: 24, marginTop: 4 }}>{balTexto}</p>
-        <div className="flex justify-between mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 16 }}>
+
+      {/* ── Balance ── */}
+      <div style={{ margin: '0 16px', borderRadius: 20, padding: '18px 20px', background: '#C4785A', flexShrink: 0 }}>
+        <p style={{ fontFamily: 'Lato, sans-serif', color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Balance actual</p>
+        <p style={{
+          fontFamily: 'Playfair Display, serif', fontStyle: 'italic',
+          color: 'white', fontSize: 20, marginTop: 4,
+          // Evitar overflow en pantallas chicas
+          overflowWrap: 'break-word', wordBreak: 'break-word',
+        }}>
+          {balTexto}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
           {[
-            { label: 'Total', valor: `$${gastos.reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
-            { label: 'Indi pagó', valor: `$${gastos.filter(g=>g.pagador==='Indi').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
-            { label: 'Mati pagó', valor: `$${gastos.filter(g=>g.pagador==='Mati').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
+            { label: 'Total',      valor: `$${gastos.reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
+            { label: 'Indi pagó',  valor: `$${gastos.filter(g=>g.pagador==='Indi').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
+            { label: 'Mati pagó',  valor: `$${gastos.filter(g=>g.pagador==='Mati').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
           ].map(({ label, valor }) => (
-            <div key={label} className="text-center">
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, ...LATO }}>{label}</p>
-              <p style={{ color: 'white', fontSize: 20, fontWeight: 700, ...LATO }}>{valor}</p>
+            <div key={label} style={{ textAlign: 'center', flex: 1 }}>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontFamily: 'Lato, sans-serif' }}>{label}</p>
+              <p style={{ color: 'white', fontSize: 18, fontWeight: 700, fontFamily: 'Lato, sans-serif' }}>{valor}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="px-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {[{ id:'todos', label:'Todos', emoji:'🗂️', color:'#8B7355' }, ...CATEGORIAS].map(c => (
-          <button
-            key={c.id}
-            onClick={() => setFiltro(c.id)}
-            className="flex items-center gap-1.5 whitespace-nowrap transition-all"
+      {/* ── Filtros horizontales ── */}
+      <div className="no-scrollbar"
+        style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px 4px' }}>
+        {TODOS_FILTROS.map(c => (
+          <button key={c.id} onClick={() => setFiltro(c.id)}
             style={{
-              ...LATO,
-              padding: '8px 16px',
-              borderRadius: 50,
-              fontSize: 14,
-              fontWeight: filtro === c.id ? 700 : 400,
+              fontFamily: 'Lato, sans-serif', flexShrink: 0,
+              padding: '8px 14px', borderRadius: 50, fontSize: 13,
+              fontWeight: filtro === c.id ? 700 : 400, whiteSpace: 'nowrap',
               background: filtro === c.id ? c.color : '#FFFFFF',
               color:      filtro === c.id ? 'white' : '#8B7355',
               border:     `1.5px solid ${filtro === c.id ? c.color : '#D4C4B0'}`,
-            }}
-          >
+            }}>
             {c.emoji} {c.label}
           </button>
         ))}
       </div>
 
-      {/* Lista */}
-      <div className="flex flex-col gap-3 px-4">
+      {/* ── Lista ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px' }}>
         {filtrados.length === 0 ? (
-          <div className="text-center py-16" style={{ color: '#9B8B7A' }}>
-            <p style={{ fontSize: 48, marginBottom: 12 }}>💸</p>
-            <p style={{ ...PLAYFAIR_I, fontSize: 18, color: '#8B7355' }}>Todavía no hay gastos</p>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: '#9B8B7A' }}>
+            <p style={{ fontSize: 44, marginBottom: 12 }}>💸</p>
+            <p style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 18, color: '#8B7355' }}>
+              Todavía no hay gastos
+            </p>
           </div>
         ) : filtrados.map(g => {
           const cat = CATEGORIAS.find(c => c.id === g.categoria) || CATEGORIAS[4]
           return (
-            <div key={g.id} className="rounded-2xl p-4 flex items-center gap-3"
-              style={{ background: '#FFFFFF', border: '1.5px solid #D4C4B0', boxShadow: '0 1px 4px rgba(61,43,31,0.05)' }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                style={{ background: cat.color + '18' }}>
+            <div key={g.id} style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: '#FFFFFF', borderRadius: 18, padding: '14px 14px',
+              border: '1.5px solid #D4C4B0', boxShadow: '0 1px 4px rgba(61,43,31,0.04)',
+            }}>
+              {/* Ícono categoría */}
+              <div style={{
+                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: cat.color + '18', fontSize: 22,
+              }}>
                 {cat.emoji}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold truncate" style={{ color: '#3D2B1F', fontSize: 15, ...LATO }}>{g.descripcion}</p>
-                <p style={{ color: '#9B8B7A', fontSize: 13, ...LATO }}>Pagó {g.pagador} · {g.fecha}</p>
-                <div className="flex gap-3 mt-1">
-                  <span style={{ color: '#C4785A', fontSize: 13, ...LATO }}>Indi ${g.parteIndi.toFixed(0)}</span>
+              {/* Info — ocupa todo el espacio disponible */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontFamily: 'Lato, sans-serif', fontWeight: 700, fontSize: 15,
+                  color: '#3D2B1F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {g.descripcion}
+                </p>
+                <p style={{ fontFamily: 'Lato, sans-serif', color: '#9B8B7A', fontSize: 12, marginTop: 2 }}>
+                  Pagó {g.pagador} · {g.fecha}
+                </p>
+                <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                  <span style={{ fontFamily: 'Lato, sans-serif', color: '#C4785A', fontSize: 12 }}>Indi ${g.parteIndi.toFixed(0)}</span>
                   <span style={{ color: '#D4C4B0' }}>·</span>
-                  <span style={{ color: '#7A9E7E', fontSize: 13, ...LATO }}>Mati ${g.parteMati.toFixed(0)}</span>
+                  <span style={{ fontFamily: 'Lato, sans-serif', color: '#7A9E7E', fontSize: 12 }}>Mati ${g.parteMati.toFixed(0)}</span>
                 </div>
               </div>
-              <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                <p style={{ fontWeight: 700, fontSize: 16, color: '#3D2B1F', ...LATO }}>${g.monto.toFixed(0)}</p>
+              {/* Monto + borrar */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, flexShrink: 0 }}>
+                <p style={{ fontFamily: 'Lato, sans-serif', fontWeight: 700, fontSize: 16, color: '#3D2B1F' }}>
+                  ${g.monto.toFixed(0)}
+                </p>
                 <button onClick={() => setGastos(p => p.filter(x => x.id !== g.id))}
-                  style={{ color: '#D4C4B0', fontSize: 12, padding: '2px 8px', borderRadius: 8, background: '#FAF6EF', ...LATO }}>
+                  style={{ fontFamily: 'Lato, sans-serif', fontSize: 12, color: '#C4B0A0', background: '#FAF6EF', border: 'none', borderRadius: 8, padding: '2px 8px', cursor: 'pointer' }}>
                   ✕
                 </button>
               </div>
@@ -133,56 +160,72 @@ export default function Gastos() {
         })}
       </div>
 
-      {/* FAB */}
-      <button
-        onClick={() => setShowForm(true)}
-        className="fixed bottom-20 right-5 z-30 flex items-center justify-center text-white text-3xl transition-transform active:scale-95"
-        style={{ width: 60, height: 60, borderRadius: 30, background: '#C4785A', boxShadow: '0 4px 20px rgba(196,120,90,0.4)' }}
-      >
+      {/* ── FAB ── */}
+      <button onClick={() => setShowForm(true)}
+        className="fixed z-30"
+        style={{
+          bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
+          right: 20,
+          width: 56, height: 56, borderRadius: 28,
+          background: '#C4785A', color: 'white', fontSize: 28,
+          boxShadow: '0 4px 20px rgba(196,120,90,0.42)',
+          border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
         +
       </button>
 
-      {/* Modal */}
+      {/* ── Modal nuevo gasto ── */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end"
+        <div
+          className="fixed inset-0 z-50 flex items-end"
           style={{ background: 'rgba(61,43,31,0.5)' }}
-          onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}>
-          <div className="w-full rounded-t-3xl p-6 flex flex-col gap-5 overflow-y-auto"
-            style={{ background: '#FFFFFF', maxHeight: '92dvh' }}>
-
-            <div className="flex items-center justify-between">
-              <h2 style={{ ...PLAYFAIR_I, fontSize: 22, color: '#3D2B1F' }}>Nuevo gasto</h2>
-              <button onClick={() => setShowForm(false)} style={{ color: '#9B8B7A', fontSize: 24, lineHeight: 1 }}>✕</button>
+          onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}
+        >
+          <div
+            className="w-full"
+            style={{
+              background: '#FFFFFF', borderRadius: '24px 24px 0 0',
+              maxHeight: '92dvh', overflowY: 'auto',
+              padding: '24px 20px',
+              // Safe area abajo dentro del modal
+              paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))',
+              display: 'flex', flexDirection: 'column', gap: 18,
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            {/* Título */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#3D2B1F' }}>
+                Nuevo gasto
+              </h2>
+              <button onClick={() => setShowForm(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#9B8B7A', lineHeight: 1, padding: 4 }}>
+                ✕
+              </button>
             </div>
 
-            <input
-              style={{ ...LATO, border: '1.5px solid #D4C4B0', background: '#FAF6EF', color: '#3D2B1F', fontSize: 16, borderRadius: 16, padding: '14px 20px', width: '100%', outline: 'none' }}
-              placeholder="Descripción (ej: Almuerzo en el puerto)"
-              value={form.descripcion}
-              onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
-            />
+            {/* Descripción */}
+            <input style={inputStyle} placeholder="Descripción (ej: Almuerzo en el puerto)"
+              value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
 
             {/* Monto */}
-            <input
-              type="number"
-              style={{ ...LATO, border: '1.5px solid #D4C4B0', background: '#FAF6EF', color: '#3D2B1F', fontSize: 16, borderRadius: 16, padding: '14px 20px', width: '100%', outline: 'none' }}
-              placeholder="Monto $"
-              value={form.monto}
-              onChange={e => setForm(f => ({ ...f, monto: e.target.value }))}
-            />
+            <input type="number" style={inputStyle} placeholder="Monto $"
+              value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
 
             {/* Pagador */}
             <div>
-              <p style={{ ...LATO, color: '#8B7355', fontSize: 14, marginBottom: 10 }}>¿Quién pagó?</p>
-              <div className="flex gap-3">
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>¿Quién pagó?</p>
+              <div style={{ display: 'flex', gap: 12 }}>
                 {['Indi', 'Mati'].map(p => (
                   <button key={p} onClick={() => setForm(f => ({ ...f, pagador: p }))}
-                    className="flex-1 transition-all active:scale-95"
                     style={{
-                      ...LATO, padding: '14px', borderRadius: 16, fontSize: 16, fontWeight: 700,
+                      flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 16, fontWeight: 700,
+                      padding: '14px 0', borderRadius: 14, border: '1.5px solid',
+                      cursor: 'pointer', transition: 'all 0.15s',
                       background: form.pagador === p ? '#C4785A' : '#FAF6EF',
                       color:      form.pagador === p ? 'white'   : '#8B7355',
-                      border:     `1.5px solid ${form.pagador === p ? '#C4785A' : '#D4C4B0'}`,
+                      borderColor: form.pagador === p ? '#C4785A' : '#D4C4B0',
                     }}>
                     {p}
                   </button>
@@ -190,20 +233,21 @@ export default function Gastos() {
               </div>
             </div>
 
-            {/* Categorías */}
+            {/* Categoría */}
             <div>
-              <p style={{ ...LATO, color: '#8B7355', fontSize: 14, marginBottom: 10 }}>Categoría</p>
-              <div className="flex flex-wrap gap-2">
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>Categoría</p>
+              <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                 {CATEGORIAS.map(c => (
                   <button key={c.id} onClick={() => setForm(f => ({ ...f, categoria: c.id }))}
-                    className="flex items-center gap-2 transition-all"
                     style={{
-                      ...LATO, padding: '10px 16px', borderRadius: 50, fontSize: 14,
-                      background: form.categoria === c.id ? c.color : '#FAF6EF',
-                      color:      form.categoria === c.id ? 'white' : '#8B7355',
-                      border:     `1.5px solid ${form.categoria === c.id ? c.color : '#D4C4B0'}`,
+                      flexShrink: 0, fontFamily: 'Lato, sans-serif', fontSize: 14,
+                      padding: '10px 14px', borderRadius: 50, border: '1.5px solid', cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      background:  form.categoria === c.id ? c.color  : '#FAF6EF',
+                      color:       form.categoria === c.id ? 'white'  : '#8B7355',
+                      borderColor: form.categoria === c.id ? c.color  : '#D4C4B0',
                     }}>
-                    <span style={{ fontSize: 18 }}>{c.emoji}</span> {c.label}
+                    {c.emoji} {c.label}
                   </button>
                 ))}
               </div>
@@ -211,26 +255,26 @@ export default function Gastos() {
 
             {/* División */}
             <div>
-              <p style={{ ...LATO, color: '#8B7355', fontSize: 14, marginBottom: 10 }}>División</p>
-              <div className="flex gap-3">
-                {['50/50', 'custom'].map(d => (
-                  <button key={d} onClick={() => setForm(f => ({ ...f, division: d }))}
-                    className="flex-1 transition-all"
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>División</p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                {[['50/50', '50 / 50'], ['custom', 'Personalizado']].map(([val, label]) => (
+                  <button key={val} onClick={() => setForm(f => ({ ...f, division: val }))}
                     style={{
-                      ...LATO, padding: '14px', borderRadius: 16, fontSize: 15,
-                      background: form.division === d ? '#8B7355' : '#FAF6EF',
-                      color:      form.division === d ? 'white'   : '#8B7355',
-                      border:     `1.5px solid ${form.division === d ? '#8B7355' : '#D4C4B0'}`,
+                      flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 15,
+                      padding: '13px 0', borderRadius: 14, border: '1.5px solid', cursor: 'pointer',
+                      background:  form.division === val ? '#8B7355' : '#FAF6EF',
+                      color:       form.division === val ? 'white'   : '#8B7355',
+                      borderColor: form.division === val ? '#8B7355' : '#D4C4B0',
                     }}>
-                    {d === '50/50' ? '50 / 50' : 'Personalizado'}
+                    {label}
                   </button>
                 ))}
               </div>
               {form.division === 'custom' && (
-                <div className="flex gap-3 mt-3">
+                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
                   {[['customIndi', 'Parte Indi $'], ['customMati', 'Parte Mati $']].map(([key, ph]) => (
                     <input key={key} type="number"
-                      style={{ ...LATO, flex: 1, border: '1.5px solid #D4C4B0', background: '#FAF6EF', color: '#3D2B1F', fontSize: 15, borderRadius: 16, padding: '12px 16px', outline: 'none' }}
+                      style={{ ...inputStyle, flex: 1, width: 'auto' }}
                       placeholder={ph}
                       value={form[key]}
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
@@ -240,9 +284,14 @@ export default function Gastos() {
               )}
             </div>
 
+            {/* Confirmar */}
             <button onClick={agregar}
-              className="w-full transition-all active:scale-95"
-              style={{ ...LATO, padding: '18px', borderRadius: 16, background: '#C4785A', color: 'white', fontSize: 17, fontWeight: 700, boxShadow: '0 4px 12px rgba(196,120,90,0.3)' }}>
+              style={{
+                fontFamily: 'Lato, sans-serif', fontSize: 17, fontWeight: 700,
+                padding: '17px', borderRadius: 16, background: '#C4785A', color: 'white',
+                border: 'none', cursor: 'pointer', width: '100%',
+                boxShadow: '0 4px 12px rgba(196,120,90,0.3)',
+              }}>
               Agregar gasto 💸
             </button>
           </div>

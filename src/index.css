@@ -1,39 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&family=Lato:wght@400;700&display=swap');
 @import "tailwindcss";
 
-/* Forzar light mode siempre — evita dark mode de iOS/Android */
 :root {
   color-scheme: light;
-  --parchment: #FAF6EF;
-  --cream:     #FFFFFF;
-  --terracotta: #C4785A;
-  --dusty-rose: #D4A0A0;
-  --warm-brown: #8B7355;
-  --dark-brown: #3D2B1F;
-  --muted:      #9B8B7A;
-  --sage:       #7A9E7E;
-  --bordeaux:   #7B2D3E;
-  --border:     #D4C4B0;
+  --parchment:   #FAF6EF;
+  --cream:       #FFFFFF;
+  --terracotta:  #C4785A;
+  --dusty-rose:  #D4A0A0;
+  --warm-brown:  #8B7355;
+  --dark-brown:  #3D2B1F;
+  --muted:       #9B8B7A;
+  --sage:        #7A9E7E;
+  --bordeaux:    #7B2D3E;
+  --border:      #D4C4B0;
+  --nav-h:       60px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  background-color: #FAF6EF;
-}
-
-body {
-  font-family: 'Lato', sans-serif;
+html, body {
   background-color: #FAF6EF !important;
-  min-height: 100dvh;
   color: #3D2B1F !important;
+  color-scheme: light;
+  font-family: 'Lato', sans-serif;
   -webkit-font-smoothing: antialiased;
-  /* Evitar que Safari aplique filtros de dark mode a inputs */
-  -webkit-text-fill-color: initial;
-}
-
-h1, h2, h3 {
-  font-family: 'Playfair Display', serif;
+  overscroll-behavior: none;
 }
 
 #root {
@@ -43,17 +34,35 @@ h1, h2, h3 {
   background-color: #FAF6EF;
 }
 
-/* Evitar dark mode en inputs de iOS */
+h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+/* Evitar zoom en inputs iOS (mínimo 16px) */
 input, textarea, select {
   -webkit-appearance: none;
   appearance: none;
-  background-color: #F2E8D9 !important;
+  font-size: 16px !important;
+  background-color: #FAF6EF !important;
   color: #3D2B1F !important;
+  border-radius: 16px;
 }
-
 input::placeholder, textarea::placeholder {
   color: #9B8B7A !important;
   opacity: 1;
+}
+
+/* Ocultar scrollbar en filtros horizontales */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Scrollbar delgada */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #D4C4B0; border-radius: 4px; }
+
+/* Polaroid */
+.polaroid {
+  background: white;
+  padding: 8px 8px 28px 8px;
+  box-shadow: 0 4px 20px rgba(61,43,31,0.14), 0 1px 4px rgba(61,43,31,0.07);
 }
 
 /* Leaflet */
@@ -62,20 +71,9 @@ input::placeholder, textarea::placeholder {
 .leaflet-control   { z-index: 1 !important; }
 .leaflet-popup-content-wrapper {
   border-radius: 16px !important;
-  border: 2px solid #D4C4B0 !important;
+  border: 1.5px solid #D4C4B0 !important;
   box-shadow: 0 4px 20px rgba(61,43,31,0.15) !important;
   font-family: 'Lato', sans-serif !important;
   background: #FFFFFF !important;
 }
 .leaflet-popup-tip { background: #FFFFFF !important; }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: #D4C4B0; border-radius: 4px; }
-
-/* Polaroid */
-.polaroid {
-  background: white;
-  padding: 10px 10px 36px 10px;
-  box-shadow: 0 4px 20px rgba(61,43,31,0.15), 0 1px 4px rgba(61,43,31,0.08);
-}
