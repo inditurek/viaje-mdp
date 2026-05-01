@@ -5,89 +5,89 @@ import 'leaflet/dist/leaflet.css'
 import { useStorage } from '../hooks/useStorage'
 import { LUGARES_INICIALES } from '../data/lugares'
 
-// Íconos personalizados con corazoncitos
-function crearIcono(visitado) {
+function crearIconoCorazon(visitado) {
+  const fill   = visitado ? '#F4A0B5' : 'white'
+  const stroke = visitado ? '#7B2D3E' : '#5A5A5A'
+  const svg = `<svg width="34" height="32" viewBox="0 0 34 32" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17 28 C17 28 3 17 3 9.5 C3 5.5 6.2 2.5 10.5 2.5 C13.2 2.5 15.5 4 17 6 C18.5 4 20.8 2.5 23.5 2.5 C27.8 2.5 31 5.5 31 9.5 C31 17 17 28 17 28Z"
+      fill="${fill}" stroke="${stroke}" stroke-width="2.8" stroke-linejoin="round"/>
+  </svg>`
   return L.divIcon({
     className: '',
-    html: `<div style="
-      font-size: 28px;
-      line-height: 1;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-      transform: translateY(-50%);
-    ">${visitado ? '❤️' : '🤍'}</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -36],
+    html: `<div style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.25))">${svg}</div>`,
+    iconSize: [34, 32],
+    iconAnchor: [17, 30],
+    popupAnchor: [0, -32],
   })
 }
 
-const CATEGORIAS_COLORES = {
-  'Playa': '#4ECDC4',
-  'Gastronomía': '#FF6B6B',
-  'Naturaleza': '#6BCB77',
-  'Actividad': '#FFB347',
-  'Paseo': '#FF9ECD',
+const CAT_COLORS = {
+  'Café':        '#8B7355',
+  'Restaurante': '#C4785A',
+  'Bar':         '#7B2D3E',
+  'Lugar':       '#7A9E7E',
+  'Heladería':   '#D4A0A0',
+  'Paseo':       '#9B8B7A',
 }
 
-function FlyToMapa({ center }) {
+function FlyTo({ center }) {
   const map = useMap()
-  useEffect(() => {
-    if (center) map.flyTo(center, 15, { duration: 1 })
-  }, [center, map])
+  useEffect(() => { if (center) map.flyTo(center, 15, { duration: 1 }) }, [center, map])
   return null
 }
 
 export default function Mapa() {
   const [lugares, setLugares] = useStorage('lugares', LUGARES_INICIALES)
-  const [seleccionado, setSeleccionado] = useState(null)
   const [showLista, setShowLista] = useState(false)
+  const [flyTo, setFlyTo]         = useState(null)
   const [showAgregar, setShowAgregar] = useState(false)
-  const [flyTo, setFlyTo] = useState(null)
-  const [nuevoLugar, setNuevoLugar] = useState({ nombre: '', descripcion: '', categoria: 'Paseo' })
+  const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', categoria: 'Café' })
 
-  function toggleVisitado(id) {
+  const visitados = lugares.filter(l => l.visitado).length
+  const total     = lugares.length
+
+  function toggle(id) {
     setLugares(prev => prev.map(l => l.id === id ? { ...l, visitado: !l.visitado } : l))
   }
 
-  function agregarLugar() {
-    if (!nuevoLugar.nombre) return
+  function agregar() {
+    if (!nuevo.nombre) return
     setLugares(prev => [...prev, {
-      id: Date.now(),
-      ...nuevoLugar,
-      lat: -38.0024,
-      lng: -57.5447,
-      emoji: '📍',
-      visitado: false,
+      id: Date.now(), ...nuevo,
+      lat: -38.0024, lng: -57.5447,
+      emoji: '📍', visitado: false,
     }])
-    setNuevoLugar({ nombre: '', descripcion: '', categoria: 'Paseo' })
+    setNuevo({ nombre: '', descripcion: '', categoria: 'Café' })
     setShowAgregar(false)
   }
-
-  const visitados = lugares.filter(l => l.visitado).length
-  const total = lugares.length
 
   return (
     <div className="flex flex-col" style={{ height: 'calc(100dvh - 56px)' }}>
       {/* Barra superior */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b" style={{ borderColor: '#FFB6C1' }}>
+      <div
+        className="flex items-center justify-between px-4 py-3 z-20"
+        style={{ background: '#FFFDF5', borderBottom: '2px solid #D4C4B0' }}
+      >
         <div>
-          <h2 className="font-bold text-base" style={{ fontFamily: 'Comfortaa', color: '#FF6B6B' }}>
-            🗺️ Mar del Plata
+          <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic', fontSize: 18 }}>
+            Mar del Plata
           </h2>
-          <p className="text-xs text-gray-400">{visitados}/{total} lugares visitados</p>
+          <p className="font-hand text-sm" style={{ color: '#9B8B7A', fontSize: 13 }}>
+            {visitados} de {total} lugares visitados
+          </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setShowLista(v => !v)}
-            className="px-3 py-1.5 rounded-xl text-sm border font-medium"
-            style={{ borderColor: '#4ECDC4', color: '#4ECDC4' }}
+            className="px-4 py-2.5 rounded-xl font-hand text-base transition-all"
+            style={{ fontSize: 15, background: '#F2E8D9', color: '#8B7355', border: '1.5px solid #D4C4B0' }}
           >
             Lista
           </button>
           <button
             onClick={() => setShowAgregar(true)}
-            className="px-3 py-1.5 rounded-xl text-sm text-white font-medium"
-            style={{ background: '#FF6B6B' }}
+            className="px-4 py-2.5 rounded-xl font-hand text-base text-white transition-all"
+            style={{ fontSize: 15, background: '#C4785A' }}
           >
             + Lugar
           </button>
@@ -97,7 +97,7 @@ export default function Mapa() {
       {/* Mapa */}
       <div className="flex-1 relative">
         <MapContainer
-          center={[-38.002, -57.544]}
+          center={[-38.008, -57.545]}
           zoom={13}
           className="w-full h-full"
           zoomControl={false}
@@ -106,47 +106,37 @@ export default function Mapa() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {flyTo && <FlyToMapa center={flyTo} />}
-          {lugares.map(lugar => (
-            <Marker
-              key={lugar.id}
-              position={[lugar.lat, lugar.lng]}
-              icon={crearIcono(lugar.visitado)}
-              eventHandlers={{ click: () => setSeleccionado(lugar) }}
-            >
+          {flyTo && <FlyTo center={flyTo} />}
+          {lugares.map(l => (
+            <Marker key={l.id} position={[l.lat, l.lng]} icon={crearIconoCorazon(l.visitado)}>
               <Popup>
-                <div style={{ minWidth: 200, fontFamily: 'Inter, sans-serif' }}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{lugar.emoji}</span>
-                    <strong style={{ color: '#FF6B6B' }}>{lugar.nombre}</strong>
+                <div style={{ minWidth: 200, fontFamily: 'Lato, sans-serif' }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span style={{ fontSize: 20 }}>{l.emoji}</span>
+                    <strong style={{ color: '#3D2B1F', fontSize: 15 }}>{l.nombre}</strong>
                   </div>
                   <span
-                    className="inline-block px-2 py-0.5 rounded-full text-xs font-medium mb-2"
+                    className="inline-block px-2 py-0.5 rounded-full text-xs font-bold mb-2"
                     style={{
-                      background: (CATEGORIAS_COLORES[lugar.categoria] || '#9CA3AF') + '20',
-                      color: CATEGORIAS_COLORES[lugar.categoria] || '#9CA3AF',
+                      background: (CAT_COLORS[l.categoria] || '#9B8B7A') + '20',
+                      color: CAT_COLORS[l.categoria] || '#9B8B7A',
                     }}
                   >
-                    {lugar.categoria}
+                    {l.categoria}
                   </span>
-                  <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 8, lineHeight: 1.4 }}>
-                    {lugar.descripcion}
+                  <p style={{ fontSize: 13, color: '#8B7355', marginBottom: 10, lineHeight: 1.4 }}>
+                    {l.descripcion}
                   </p>
                   <button
-                    onClick={() => toggleVisitado(lugar.id)}
+                    onClick={() => toggle(l.id)}
                     style={{
-                      background: lugar.visitado ? '#4ECDC4' : '#FF6B6B',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 12,
-                      padding: '6px 16px',
-                      fontSize: 13,
-                      cursor: 'pointer',
-                      width: '100%',
-                      fontWeight: 600,
+                      width: '100%', padding: '8px 0', borderRadius: 12,
+                      background: l.visitado ? '#7A9E7E' : '#C4785A',
+                      color: 'white', border: 'none', cursor: 'pointer',
+                      fontFamily: 'Caveat, cursive', fontSize: 16, fontWeight: 700,
                     }}
                   >
-                    {lugar.visitado ? '✓ Visitado' : '❤️ Marcar visitado'}
+                    {l.visitado ? '✓ Visitado' : '♥ Marcar como visitado'}
                   </button>
                 </div>
               </Popup>
@@ -155,70 +145,76 @@ export default function Mapa() {
         </MapContainer>
 
         {/* Leyenda */}
-        <div className="absolute bottom-4 left-4 z-10 bg-white rounded-2xl px-3 py-2 shadow-lg flex gap-4 text-xs">
-          <div className="flex items-center gap-1">
-            <span>🤍</span><span className="text-gray-500">Pendiente</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span>❤️</span><span className="text-gray-500">Visitado</span>
-          </div>
+        <div
+          className="absolute bottom-4 left-4 z-10 flex gap-3 px-4 py-2.5 rounded-2xl font-hand text-sm"
+          style={{ background: '#FFFDF5', border: '1.5px solid #D4C4B0', boxShadow: '0 2px 8px rgba(61,43,31,0.1)', fontSize: 14 }}
+        >
+          <span style={{ color: '#5A5A5A' }}>🤍 Pendiente</span>
+          <span style={{ color: '#D4C4B0' }}>·</span>
+          <span style={{ color: '#7B2D3E' }}>❤️ Visitado</span>
         </div>
 
-        {/* Progress bar */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 bg-white rounded-full px-3 py-1.5 shadow-md flex items-center gap-2">
-          <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+        {/* Progreso */}
+        <div
+          className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 px-4 py-2 rounded-full"
+          style={{ background: '#FFFDF5', border: '1.5px solid #D4C4B0', boxShadow: '0 2px 8px rgba(61,43,31,0.08)' }}
+        >
+          <div className="w-28 h-2 rounded-full overflow-hidden" style={{ background: '#F2E8D9' }}>
             <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${(visitados / total) * 100}%`, background: 'linear-gradient(90deg, #FF6B6B, #FF9ECD)' }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${(visitados / total) * 100}%`, background: '#D4A0A0' }}
             />
           </div>
-          <span className="text-xs font-medium text-gray-600">{visitados}/{total}</span>
+          <span className="font-hand text-sm" style={{ color: '#8B7355', fontSize: 14 }}>
+            {visitados}/{total}
+          </span>
         </div>
       </div>
 
-      {/* Lista panel */}
+      {/* Panel lista */}
       {showLista && (
         <div
-          className="absolute inset-0 z-20 flex flex-col"
-          style={{ background: 'rgba(0,0,0,0.5)', top: 56 }}
+          className="absolute inset-0 z-30 flex flex-col"
+          style={{ background: 'rgba(61,43,31,0.45)', top: 56 + 57 }}
           onClick={() => setShowLista(false)}
         >
           <div
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl overflow-y-auto"
-            style={{ maxHeight: '70%' }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl flex flex-col overflow-hidden"
+            style={{ background: '#FFFDF5', maxHeight: '72%' }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white px-4 pt-4 pb-2 border-b" style={{ borderColor: '#F3F4F6' }}>
+            <div className="sticky top-0 px-5 pt-5 pb-3" style={{ background: '#FFFDF5', borderBottom: '1.5px solid #F2E8D9' }}>
               <div className="flex items-center justify-between">
-                <h3 className="font-bold" style={{ fontFamily: 'Comfortaa', color: '#FF6B6B' }}>Todos los lugares</h3>
-                <button onClick={() => setShowLista(false)} className="text-gray-400">✕</button>
+                <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic', fontSize: 18 }}>
+                  Todos los lugares
+                </h3>
+                <button onClick={() => setShowLista(false)} style={{ color: '#9B8B7A', fontSize: 22 }}>✕</button>
               </div>
             </div>
-            <div className="p-4 flex flex-col gap-2">
+            <div className="overflow-y-auto p-4 flex flex-col gap-2">
               {lugares.map(l => (
                 <div
                   key={l.id}
-                  className="flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all"
-                  style={{ background: l.visitado ? '#F0FFF8' : '#FAFAFA' }}
-                  onClick={() => {
-                    setFlyTo([l.lat, l.lng])
-                    setShowLista(false)
-                  }}
+                  className="flex items-center gap-3 p-4 rounded-2xl cursor-pointer transition-all"
+                  style={{ background: l.visitado ? '#F0F8F0' : '#F2E8D9' }}
+                  onClick={() => { setFlyTo([l.lat, l.lng]); setShowLista(false) }}
                 >
-                  <span className="text-2xl">{l.visitado ? '❤️' : '🤍'}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm text-gray-800">{l.nombre}</p>
-                    <p className="text-xs text-gray-400">{l.categoria}</p>
+                  <span style={{ fontSize: 22 }}>{l.visitado ? '❤️' : '🤍'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate" style={{ color: '#3D2B1F', fontSize: 15 }}>{l.nombre}</p>
+                    <p className="font-hand text-sm" style={{ color: '#9B8B7A', fontSize: 13 }}>{l.categoria}</p>
                   </div>
                   <button
-                    onClick={e => { e.stopPropagation(); toggleVisitado(l.id) }}
-                    className="text-xs px-3 py-1.5 rounded-xl font-medium"
+                    onClick={e => { e.stopPropagation(); toggle(l.id) }}
+                    className="px-3 py-2 rounded-xl font-hand text-sm transition-all"
                     style={{
-                      background: l.visitado ? '#4ECDC420' : '#FF6B6B20',
-                      color: l.visitado ? '#4ECDC4' : '#FF6B6B',
+                      fontSize: 14,
+                      background: l.visitado ? '#7A9E7E20' : '#C4785A20',
+                      color:      l.visitado ? '#7A9E7E'   : '#C4785A',
+                      border:     `1.5px solid ${l.visitado ? '#7A9E7E40' : '#C4785A40'}`,
                     }}
                   >
-                    {l.visitado ? 'Visitado' : 'Pendiente'}
+                    {l.visitado ? '✓' : '♥'}
                   </button>
                 </div>
               ))}
@@ -227,39 +223,47 @@ export default function Mapa() {
         </div>
       )}
 
-      {/* Modal agregar lugar */}
+      {/* Modal agregar */}
       {showAgregar && (
-        <div className="fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full bg-white rounded-t-3xl p-6 flex flex-col gap-4">
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(61,43,31,0.55)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowAgregar(false) }}
+        >
+          <div className="w-full rounded-t-3xl p-6 flex flex-col gap-5" style={{ background: '#FFFDF5' }}>
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-lg" style={{ fontFamily: 'Comfortaa', color: '#FF6B6B' }}>Nuevo lugar</h3>
-              <button onClick={() => setShowAgregar(false)} className="text-gray-400 text-xl">✕</button>
+              <h3 style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic', fontSize: 20 }}>
+                Nuevo lugar
+              </h3>
+              <button onClick={() => setShowAgregar(false)} style={{ color: '#9B8B7A', fontSize: 22 }}>✕</button>
             </div>
             <input
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none focus:border-pink-300"
+              className="w-full rounded-2xl px-5 py-4 outline-none text-base"
+              style={{ background: '#F2E8D9', border: '1.5px solid #D4C4B0', color: '#3D2B1F', fontSize: 16 }}
               placeholder="Nombre del lugar"
-              value={nuevoLugar.nombre}
-              onChange={e => setNuevoLugar(n => ({ ...n, nombre: e.target.value }))}
+              value={nuevo.nombre}
+              onChange={e => setNuevo(n => ({ ...n, nombre: e.target.value }))}
             />
             <textarea
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none resize-none focus:border-pink-300"
+              className="w-full rounded-2xl px-5 py-4 outline-none text-base resize-none"
+              style={{ background: '#F2E8D9', border: '1.5px solid #D4C4B0', color: '#3D2B1F', fontSize: 16 }}
               placeholder="¿Qué se puede hacer ahí?"
               rows={2}
-              value={nuevoLugar.descripcion}
-              onChange={e => setNuevoLugar(n => ({ ...n, descripcion: e.target.value }))}
+              value={nuevo.descripcion}
+              onChange={e => setNuevo(n => ({ ...n, descripcion: e.target.value }))}
             />
             <select
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 bg-white"
-              value={nuevoLugar.categoria}
-              onChange={e => setNuevoLugar(n => ({ ...n, categoria: e.target.value }))}
+              className="w-full rounded-2xl px-5 py-4 text-base"
+              style={{ background: '#F2E8D9', border: '1.5px solid #D4C4B0', color: '#3D2B1F', fontSize: 16 }}
+              value={nuevo.categoria}
+              onChange={e => setNuevo(n => ({ ...n, categoria: e.target.value }))}
             >
-              {Object.keys(CATEGORIAS_COLORES).map(c => <option key={c} value={c}>{c}</option>)}
+              {Object.keys(CAT_COLORS).map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <p className="text-xs text-gray-400 text-center">El marcador se colocará en el centro del mapa. Podés moverlo después.</p>
             <button
-              onClick={agregarLugar}
-              className="w-full py-4 rounded-2xl text-white font-bold text-base active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
+              onClick={agregar}
+              className="w-full py-5 rounded-2xl font-hand text-lg font-bold text-white transition-all active:scale-95"
+              style={{ fontSize: 18, background: '#C4785A', boxShadow: '0 4px 12px rgba(196,120,90,0.3)' }}
             >
               Agregar lugar 📍
             </button>

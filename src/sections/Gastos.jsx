@@ -2,23 +2,30 @@ import { useState } from 'react'
 import { useStorage } from '../hooks/useStorage'
 
 const CATEGORIAS = [
-  { id: 'comida', label: 'Comida', emoji: '🍕', color: '#FF6B6B' },
-  { id: 'alojamiento', label: 'Alojamiento', emoji: '🏨', color: '#4ECDC4' },
-  { id: 'actividades', label: 'Actividades', emoji: '🎭', color: '#FFB347' },
-  { id: 'transporte', label: 'Transporte', emoji: '🚌', color: '#FF9ECD' },
-  { id: 'otro', label: 'Otro', emoji: '✨', color: '#9CA3AF' },
+  { id: 'comida',      label: 'Comida',      emoji: '🍽️', color: '#C4785A' },
+  { id: 'cafe',        label: 'Café',        emoji: '☕',  color: '#8B7355' },
+  { id: 'actividades', label: 'Actividades', emoji: '🎭',  color: '#7A9E7E' },
+  { id: 'transporte',  label: 'Transporte',  emoji: '🚌',  color: '#9B8B7A' },
+  { id: 'otro',        label: 'Otro',        emoji: '✨',  color: '#D4A0A0' },
 ]
 
-const PERSONAS = ['Indi', 'Vos']
+const PERSONAS = ['Indi', 'Mati']
 
 const EMPTY_FORM = {
-  descripcion: '',
-  monto: '',
-  pagador: 'Indi',
-  categoria: 'comida',
-  division: '50/50',
-  customIndi: '',
-  customVos: '',
+  descripcion: '', monto: '', pagador: 'Indi',
+  categoria: 'comida', division: '50/50',
+  customIndi: '', customMati: '',
+}
+
+function SectionCard({ children, style }) {
+  return (
+    <div
+      className="mx-4 rounded-2xl p-5"
+      style={{ background: '#FFFDF5', border: '1.5px solid #D4C4B0', boxShadow: '0 2px 8px rgba(61,43,31,0.07)', ...style }}
+    >
+      {children}
+    </div>
+  )
 }
 
 export default function Gastos() {
@@ -27,16 +34,15 @@ export default function Gastos() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [filtro, setFiltro] = useState('todos')
 
-  function agregarGasto() {
+  function agregar() {
     if (!form.descripcion || !form.monto) return
     const monto = parseFloat(form.monto)
-    let parteIndi, parteVos
+    let parteIndi, parteM
     if (form.division === '50/50') {
-      parteIndi = monto / 2
-      parteVos = monto / 2
+      parteIndi = monto / 2; parteM = monto / 2
     } else {
       parteIndi = parseFloat(form.customIndi) || 0
-      parteVos = parseFloat(form.customVos) || 0
+      parteM    = parseFloat(form.customMati) || 0
     }
     setGastos(prev => [{
       id: Date.now(),
@@ -45,141 +51,117 @@ export default function Gastos() {
       pagador: form.pagador,
       categoria: form.categoria,
       parteIndi,
-      parteVos,
-      fecha: new Date().toLocaleDateString('es-AR'),
+      parteMati: parteM,
+      fecha: new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }),
     }, ...prev])
     setForm(EMPTY_FORM)
     setShowForm(false)
   }
 
-  function eliminarGasto(id) {
-    setGastos(prev => prev.filter(g => g.id !== id))
-  }
+  const balance = gastos.reduce(
+    (acc, g) => {
+      if (g.pagador === 'Indi') acc.matiDebeAIndi += g.parteMati
+      else                      acc.indiDebeAMati += g.parteIndi
+      return acc
+    },
+    { matiDebeAIndi: 0, indiDebeAMati: 0 }
+  )
+  const dif = balance.matiDebeAIndi - balance.indiDebeAMati
+  const balanceTexto = dif > 0.01
+    ? `Mati le debe $${dif.toFixed(0)} a Indi`
+    : dif < -0.01
+      ? `Indi le debe $${Math.abs(dif).toFixed(0)} a Mati`
+      : '¡Están al día! 🎉'
 
-  // Balance: cuánto debe cada uno al otro
-  const balance = gastos.reduce((acc, g) => {
-    if (g.pagador === 'Indi') {
-      // Indi pagó, Vos le debe su parte
-      acc.vosDebeAIndi += g.parteVos
-    } else {
-      // Vos pagó, Indi le debe su parte
-      acc.indiDebeAVos += g.parteIndi
-    }
-    return acc
-  }, { vosDebeAIndi: 0, indiDebeAVos: 0 })
-
-  const diferencia = balance.vosDebeAIndi - balance.indiDebeAVos
-  let balanceTexto = ''
-  if (diferencia > 0.01) balanceTexto = `Vos le debés $${diferencia.toFixed(0)} a Indi`
-  else if (diferencia < -0.01) balanceTexto = `Indi te debe $${Math.abs(diferencia).toFixed(0)}`
-  else balanceTexto = '¡Están al día! 🎉'
-
-  const cat = CATEGORIAS.find(c => c.id === form.categoria)
   const gastosFiltrados = filtro === 'todos' ? gastos : gastos.filter(g => g.categoria === filtro)
-
-  // Resumen por categoría
-  const resumen = CATEGORIAS.map(c => ({
-    ...c,
-    total: gastos.filter(g => g.categoria === c.id).reduce((s, g) => s + g.monto, 0),
-  })).filter(c => c.total > 0)
+  const totalGastado = gastos.reduce((s, g) => s + g.monto, 0)
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      {/* Balance */}
-      <div
-        className="mx-4 mt-4 rounded-3xl p-5 text-white text-center shadow-lg"
-        style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
-      >
-        <p className="text-white/80 text-sm">Balance actual</p>
-        <p className="text-2xl font-bold mt-1" style={{ fontFamily: 'Comfortaa' }}>{balanceTexto}</p>
-        <div className="flex justify-around mt-4 text-sm">
-          <div>
-            <p className="text-white/70">Total gastado</p>
-            <p className="font-bold text-lg">${gastos.reduce((s, g) => s + g.monto, 0).toFixed(0)}</p>
-          </div>
-          <div className="w-px bg-white/30" />
-          <div>
-            <p className="text-white/70">Indi pagó</p>
-            <p className="font-bold text-lg">${gastos.filter(g => g.pagador === 'Indi').reduce((s, g) => s + g.monto, 0).toFixed(0)}</p>
-          </div>
-          <div className="w-px bg-white/30" />
-          <div>
-            <p className="text-white/70">Vos pagaste</p>
-            <p className="font-bold text-lg">${gastos.filter(g => g.pagador === 'Vos').reduce((s, g) => s + g.monto, 0).toFixed(0)}</p>
-          </div>
-        </div>
-      </div>
+    <div className="flex flex-col gap-5 py-5">
 
-      {/* Resumen por categoría */}
-      {resumen.length > 0 && (
-        <div className="mx-4 flex gap-2 flex-wrap">
-          {resumen.map(c => (
-            <div
-              key={c.id}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-              style={{ background: c.color + '20', color: c.color }}
-            >
-              <span>{c.emoji}</span>
-              <span>${c.total.toFixed(0)}</span>
+      {/* Balance card */}
+      <SectionCard style={{ background: '#C4785A', border: 'none' }}>
+        <p className="font-hand text-white/80 text-base">Balance actual</p>
+        <p
+          className="font-hand text-white mt-1"
+          style={{ fontSize: 26, fontWeight: 700 }}
+        >
+          {balanceTexto}
+        </p>
+        <div className="flex justify-between mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.25)' }}>
+          {[
+            { label: 'Total', valor: `$${totalGastado.toFixed(0)}` },
+            { label: 'Indi pagó', valor: `$${gastos.filter(g=>g.pagador==='Indi').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
+            { label: 'Mati pagó', valor: `$${gastos.filter(g=>g.pagador==='Mati').reduce((s,g)=>s+g.monto,0).toFixed(0)}` },
+          ].map(({ label, valor }) => (
+            <div key={label} className="text-center">
+              <p className="text-white/70 text-xs">{label}</p>
+              <p className="font-hand text-white font-bold text-lg">{valor}</p>
             </div>
           ))}
         </div>
-      )}
+      </SectionCard>
 
       {/* Filtros */}
-      <div className="mx-4 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        <button
-          onClick={() => setFiltro('todos')}
-          className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap font-medium transition-all"
-          style={{ background: filtro === 'todos' ? '#FF6B6B' : '#F3F4F6', color: filtro === 'todos' ? 'white' : '#374151' }}
-        >
-          Todos
-        </button>
-        {CATEGORIAS.map(c => (
+      <div className="px-4 flex gap-2 overflow-x-auto pb-1">
+        {[{ id: 'todos', label: 'Todos', emoji: '🗂️', color: '#8B7355' }, ...CATEGORIAS].map(c => (
           <button
             key={c.id}
             onClick={() => setFiltro(c.id)}
-            className="px-4 py-1.5 rounded-full text-sm whitespace-nowrap font-medium transition-all"
-            style={{ background: filtro === c.id ? c.color : '#F3F4F6', color: filtro === c.id ? 'white' : '#374151' }}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm whitespace-nowrap font-hand transition-all"
+            style={{
+              fontSize: 15,
+              background: filtro === c.id ? c.color : '#FFFDF5',
+              color:      filtro === c.id ? 'white'  : '#8B7355',
+              border:     `1.5px solid ${filtro === c.id ? c.color : '#D4C4B0'}`,
+            }}
           >
-            {c.emoji} {c.label}
+            <span>{c.emoji}</span>
+            <span>{c.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Lista */}
-      <div className="mx-4 flex flex-col gap-3">
+      {/* Lista de gastos */}
+      <div className="flex flex-col gap-3 px-4">
         {gastosFiltrados.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-4xl mb-3">💸</p>
-            <p>Todavía no hay gastos registrados</p>
+          <div className="text-center py-16" style={{ color: '#9B8B7A' }}>
+            <p className="text-5xl mb-4">💸</p>
+            <p className="font-hand text-lg">Todavía no hay gastos</p>
           </div>
         ) : (
           gastosFiltrados.map(g => {
-            const c = CATEGORIAS.find(x => x.id === g.categoria) || CATEGORIAS[4]
+            const cat = CATEGORIAS.find(c => c.id === g.categoria) || CATEGORIAS[4]
             return (
               <div
                 key={g.id}
-                className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3"
+                className="rounded-2xl p-4 flex items-center gap-4"
+                style={{ background: '#FFFDF5', border: '1.5px solid #D4C4B0', boxShadow: '0 1px 4px rgba(61,43,31,0.05)' }}
               >
                 <div
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
-                  style={{ background: c.color + '20' }}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                  style={{ background: cat.color + '18' }}
                 >
-                  {c.emoji}
+                  {cat.emoji}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-800 truncate">{g.descripcion}</p>
-                  <p className="text-xs text-gray-400">Pagó {g.pagador} · {g.fecha}</p>
-                  <div className="flex gap-2 mt-1 text-xs">
-                    <span style={{ color: '#FF6B6B' }}>Indi: ${g.parteIndi.toFixed(0)}</span>
-                    <span className="text-gray-300">·</span>
-                    <span style={{ color: '#4ECDC4' }}>Vos: ${g.parteVos.toFixed(0)}</span>
+                  <p className="font-bold truncate" style={{ color: '#3D2B1F', fontSize: 16 }}>{g.descripcion}</p>
+                  <p className="text-sm mt-0.5" style={{ color: '#9B8B7A' }}>Pagó {g.pagador} · {g.fecha}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    <span className="font-hand text-sm" style={{ color: '#C4785A', fontSize: 14 }}>Indi ${g.parteIndi.toFixed(0)}</span>
+                    <span style={{ color: '#D4C4B0' }}>·</span>
+                    <span className="font-hand text-sm" style={{ color: '#7A9E7E', fontSize: 14 }}>Mati ${g.parteMati.toFixed(0)}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-gray-800">${g.monto.toFixed(0)}</p>
-                  <button onClick={() => eliminarGasto(g.id)} className="text-xs text-gray-300 mt-1">✕</button>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <p className="font-bold text-lg" style={{ color: '#3D2B1F' }}>${g.monto.toFixed(0)}</p>
+                  <button
+                    onClick={() => setGastos(p => p.filter(x => x.id !== g.id))}
+                    className="text-xs px-2 py-1 rounded-lg"
+                    style={{ color: '#D4C4B0', background: '#F2E8D9' }}
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             )
@@ -190,62 +172,85 @@ export default function Gastos() {
       {/* FAB */}
       <button
         onClick={() => setShowForm(true)}
-        className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-xl text-white text-3xl flex items-center justify-center z-30 transition-transform active:scale-95"
-        style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
+        className="fixed bottom-20 right-5 w-16 h-16 rounded-full shadow-xl flex items-center justify-center z-30 text-3xl text-white transition-transform active:scale-95"
+        style={{ background: '#C4785A', boxShadow: '0 4px 20px rgba(196,120,90,0.45)' }}
       >
         +
       </button>
 
-      {/* Modal agregar gasto */}
+      {/* Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full bg-white rounded-t-3xl p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(61,43,31,0.5)' }}
+          onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}
+        >
+          <div
+            className="w-full rounded-t-3xl p-6 flex flex-col gap-5 overflow-y-auto"
+            style={{ background: '#FFFDF5', maxHeight: '92dvh' }}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold" style={{ fontFamily: 'Comfortaa', color: '#FF6B6B' }}>
+              <h2 className="text-xl" style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic' }}>
                 Nuevo gasto
-              </h3>
-              <button onClick={() => setShowForm(false)} className="text-gray-400 text-xl">✕</button>
+              </h2>
+              <button onClick={() => setShowForm(false)} style={{ color: '#9B8B7A', fontSize: 22 }}>✕</button>
             </div>
 
+            {/* Descripción */}
             <input
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none focus:border-pink-300"
-              placeholder="Descripción (ej: Almuerzo en la rambla)"
+              className="w-full rounded-2xl px-5 py-4 text-base outline-none"
+              style={{ border: '1.5px solid #D4C4B0', background: '#F2E8D9', color: '#3D2B1F', fontSize: 16 }}
+              placeholder="Descripción (ej: Almuerzo en el puerto)"
               value={form.descripcion}
               onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
             />
 
+            {/* Monto + Pagador */}
             <div className="flex gap-3">
               <input
                 type="number"
-                className="flex-1 border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none focus:border-pink-300"
+                className="flex-1 rounded-2xl px-5 py-4 text-base outline-none"
+                style={{ border: '1.5px solid #D4C4B0', background: '#F2E8D9', color: '#3D2B1F', fontSize: 16 }}
                 placeholder="Monto $"
                 value={form.monto}
                 onChange={e => setForm(f => ({ ...f, monto: e.target.value }))}
               />
-              <select
-                className="flex-1 border border-gray-200 rounded-2xl px-3 py-3 text-base outline-none bg-white"
-                value={form.pagador}
-                onChange={e => setForm(f => ({ ...f, pagador: e.target.value }))}
-              >
-                {PERSONAS.map(p => <option key={p} value={p}>Pagó {p}</option>)}
-              </select>
+              <div className="flex rounded-2xl overflow-hidden" style={{ border: '1.5px solid #D4C4B0' }}>
+                {PERSONAS.map(p => (
+                  <button
+                    key={p}
+                    onClick={() => setForm(f => ({ ...f, pagador: p }))}
+                    className="flex-1 px-4 py-4 font-hand text-base transition-all"
+                    style={{
+                      fontSize: 16,
+                      background: form.pagador === p ? '#C4785A' : '#F2E8D9',
+                      color:      form.pagador === p ? 'white'   : '#8B7355',
+                    }}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Categorías */}
             <div>
-              <p className="text-sm text-gray-500 mb-2">Categoría</p>
-              <div className="flex gap-2 flex-wrap">
+              <p className="font-hand text-base mb-3" style={{ color: '#8B7355', fontSize: 16 }}>Categoría</p>
+              <div className="flex flex-wrap gap-2">
                 {CATEGORIAS.map(c => (
                   <button
                     key={c.id}
                     onClick={() => setForm(f => ({ ...f, categoria: c.id }))}
-                    className="px-3 py-2 rounded-xl text-sm font-medium transition-all"
+                    className="flex items-center gap-2 px-4 py-3 rounded-2xl font-hand transition-all"
                     style={{
-                      background: form.categoria === c.id ? c.color : '#F3F4F6',
-                      color: form.categoria === c.id ? 'white' : '#374151',
+                      fontSize: 15,
+                      background: form.categoria === c.id ? c.color : '#F2E8D9',
+                      color:      form.categoria === c.id ? 'white' : '#8B7355',
+                      border:     `1.5px solid ${form.categoria === c.id ? c.color : '#D4C4B0'}`,
                     }}
                   >
-                    {c.emoji} {c.label}
+                    <span className="text-lg">{c.emoji}</span>
+                    <span>{c.label}</span>
                   </button>
                 ))}
               </div>
@@ -253,20 +258,21 @@ export default function Gastos() {
 
             {/* División */}
             <div>
-              <p className="text-sm text-gray-500 mb-2">División</p>
+              <p className="font-hand text-base mb-3" style={{ color: '#8B7355', fontSize: 16 }}>División</p>
               <div className="flex gap-3">
                 {['50/50', 'custom'].map(d => (
                   <button
                     key={d}
                     onClick={() => setForm(f => ({ ...f, division: d }))}
-                    className="flex-1 py-2 rounded-xl text-sm font-medium border transition-all"
+                    className="flex-1 py-4 rounded-2xl font-hand text-base transition-all"
                     style={{
-                      background: form.division === d ? '#FF6B6B' : 'white',
-                      color: form.division === d ? 'white' : '#374151',
-                      borderColor: form.division === d ? '#FF6B6B' : '#E5E7EB',
+                      fontSize: 16,
+                      background: form.division === d ? '#8B7355' : '#F2E8D9',
+                      color:      form.division === d ? 'white'   : '#8B7355',
+                      border:     `1.5px solid ${form.division === d ? '#8B7355' : '#D4C4B0'}`,
                     }}
                   >
-                    {d === '50/50' ? '50/50' : 'Personalizado'}
+                    {d === '50/50' ? '50 / 50' : 'Personalizado'}
                   </button>
                 ))}
               </div>
@@ -274,26 +280,28 @@ export default function Gastos() {
                 <div className="flex gap-3 mt-3">
                   <input
                     type="number"
-                    className="flex-1 border border-gray-200 rounded-2xl px-4 py-2 text-sm outline-none"
+                    className="flex-1 rounded-2xl px-4 py-4 text-base outline-none"
+                    style={{ border: '1.5px solid #D4C4B0', background: '#F2E8D9', fontSize: 16 }}
                     placeholder="Parte Indi $"
                     value={form.customIndi}
                     onChange={e => setForm(f => ({ ...f, customIndi: e.target.value }))}
                   />
                   <input
                     type="number"
-                    className="flex-1 border border-gray-200 rounded-2xl px-4 py-2 text-sm outline-none"
-                    placeholder="Tu parte $"
-                    value={form.customVos}
-                    onChange={e => setForm(f => ({ ...f, customVos: e.target.value }))}
+                    className="flex-1 rounded-2xl px-4 py-4 text-base outline-none"
+                    style={{ border: '1.5px solid #D4C4B0', background: '#F2E8D9', fontSize: 16 }}
+                    placeholder="Parte Mati $"
+                    value={form.customMati}
+                    onChange={e => setForm(f => ({ ...f, customMati: e.target.value }))}
                   />
                 </div>
               )}
             </div>
 
             <button
-              onClick={agregarGasto}
-              className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
+              onClick={agregar}
+              className="w-full py-5 rounded-2xl text-white font-hand text-lg font-bold transition-all active:scale-95"
+              style={{ fontSize: 18, background: '#C4785A', boxShadow: '0 4px 12px rgba(196,120,90,0.3)' }}
             >
               Agregar gasto 💸
             </button>

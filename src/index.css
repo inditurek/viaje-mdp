@@ -1,17 +1,37 @@
-@import url('https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Lato:wght@400;700&display=swap');
 @import "tailwindcss";
+
+:root {
+  --parchment: #F2E8D9;
+  --cream: #FFFDF5;
+  --terracotta: #C4785A;
+  --dusty-rose: #D4A0A0;
+  --vintage-pink: #E8C0C0;
+  --warm-brown: #8B7355;
+  --dark-brown: #3D2B1F;
+  --muted: #9B8B7A;
+  --sage: #7A9E7E;
+  --bordeaux: #7B2D3E;
+  --border: #D4C4B0;
+  --card: #FFFDF5;
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #F7F3E9;
+  font-family: 'Lato', sans-serif;
+  background-color: var(--parchment);
   min-height: 100dvh;
+  color: var(--dark-brown);
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
-  font-family: 'Comfortaa', cursive;
+  font-family: 'Playfair Display', serif;
+}
+
+.font-hand {
+  font-family: 'Caveat', cursive;
 }
 
 #root {
@@ -20,12 +40,34 @@ h1, h2, h3 {
   flex-direction: column;
 }
 
-/* Leaflet: evitar que el mapa tape la UI */
+/* Leaflet */
 .leaflet-container { z-index: 0 !important; }
 .leaflet-pane { z-index: 0 !important; }
 .leaflet-control { z-index: 1 !important; }
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  border: 2px solid var(--border) !important;
+  box-shadow: 0 4px 20px rgba(61,43,31,0.15) !important;
+  font-family: 'Lato', sans-serif !important;
+}
+.leaflet-popup-tip { background: var(--cream) !important; }
 
-/* Scrollbar delgada */
+/* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #FFB6C1; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Polaroid */
+.polaroid {
+  background: white;
+  padding: 10px 10px 32px 10px;
+  box-shadow: 0 4px 16px rgba(61,43,31,0.18), 0 1px 4px rgba(61,43,31,0.1);
+}
+
+/* Texture overlay sutil */
+.parchment-bg {
+  background-color: var(--parchment);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(196,120,90,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(212,160,160,0.06) 0%, transparent 60%);
+}

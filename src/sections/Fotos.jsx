@@ -1,147 +1,168 @@
 import { useState, useRef } from 'react'
 import { useStorage } from '../hooks/useStorage'
 
-const STICKERS = ['❤️', '⭐', '🌊', '🌸', '✨', '🦀', '🌅', '🎉', '💫', '🏖️', '🌺', '📍']
-const POST_IT_COLORS = ['#FFF9C4', '#FFD6E0', '#C4E8FF', '#D4F8C4', '#FFE5C4']
+const POSTIT_COLORS = ['#FFF4B8', '#FFD6DC', '#C8E6FF', '#D4F5C8', '#F0D4FF']
+const ROTATIONS   = [-3, -1.5, 0, 1.5, 2.5, -2, 1]
 
 function PostIt({ nota, onDelete }) {
   return (
     <div
-      className="px-3 py-2 rounded-xl text-sm shadow-sm relative group max-w-[160px]"
-      style={{ background: nota.color, transform: `rotate(${nota.rotacion}deg)` }}
+      className="relative px-4 py-3 rounded shadow-md group"
+      style={{
+        background: nota.color,
+        transform: `rotate(${nota.rot}deg)`,
+        fontFamily: 'Caveat, cursive',
+        fontSize: 16,
+        minWidth: 100,
+        maxWidth: 160,
+        boxShadow: '2px 3px 8px rgba(61,43,31,0.18)',
+      }}
     >
       <button
         onClick={onDelete}
-        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-400 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-400 text-white text-xs items-center justify-center hidden group-hover:flex group-focus-within:flex"
       >
         ✕
       </button>
-      <p className="text-gray-700 leading-snug">{nota.texto}</p>
-      <p className="text-gray-400 text-xs mt-1">{nota.autor}</p>
+      <p style={{ color: '#3D2B1F', lineHeight: 1.3 }}>{nota.texto}</p>
+      <p className="mt-1 text-xs" style={{ color: '#9B8B7A' }}>{nota.autor}</p>
     </div>
   )
 }
 
-function FotoCard({ foto, onDelete, onAddNota, onAddSticker }) {
-  const [showNotaForm, setShowNotaForm] = useState(false)
-  const [notaTexto, setNotaTexto] = useState('')
-  const [notaAutor, setNotaAutor] = useState('Indi')
-  const [showStickers, setShowStickers] = useState(false)
+function PolaroidCard({ foto, onDelete, onAddPostit }) {
+  const [showPostitForm, setShowPostitForm] = useState(false)
+  const [postitTexto, setPostitTexto] = useState('')
+  const [postitAutor, setPostitAutor] = useState('Indi')
 
-  function submitNota() {
-    if (!notaTexto.trim()) return
-    onAddNota(foto.id, {
+  function submitPostit() {
+    if (!postitTexto.trim()) return
+    onAddPostit(foto.id, {
       id: Date.now(),
-      texto: notaTexto,
-      autor: notaAutor,
-      color: POST_IT_COLORS[Math.floor(Math.random() * POST_IT_COLORS.length)],
-      rotacion: (Math.random() * 6 - 3).toFixed(1),
+      texto: postitTexto,
+      autor: postitAutor,
+      color: POSTIT_COLORS[Math.floor(Math.random() * POSTIT_COLORS.length)],
+      rot: ROTATIONS[Math.floor(Math.random() * ROTATIONS.length)],
     })
-    setNotaTexto('')
-    setShowNotaForm(false)
+    setPostitTexto('')
+    setShowPostitForm(false)
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-      <div className="relative">
+    <div
+      className="flex flex-col gap-3"
+      style={{ transform: `rotate(${foto.rotacion}deg)`, transformOrigin: 'center' }}
+    >
+      {/* Polaroid */}
+      <div
+        className="polaroid mx-auto w-full"
+        style={{ maxWidth: 320, background: 'white', position: 'relative' }}
+      >
+        <button
+          onClick={onDelete}
+          className="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center z-10 text-sm"
+          style={{ background: 'rgba(61,43,31,0.12)', color: '#8B7355' }}
+        >
+          ✕
+        </button>
         <img
           src={foto.url}
           alt={foto.descripcion}
           className="w-full object-cover"
-          style={{ maxHeight: 280 }}
+          style={{ maxHeight: 280, display: 'block' }}
         />
-        {/* Stickers sobre la foto */}
-        {foto.stickers?.map((s, i) => (
-          <span key={i} className="absolute text-2xl pointer-events-none" style={{ top: s.y + '%', left: s.x + '%' }}>
-            {s.emoji}
-          </span>
-        ))}
+        <div className="pt-3 pb-1 px-1 text-center">
+          <p
+            className="font-hand"
+            style={{ fontFamily: 'Caveat, cursive', fontSize: 20, color: '#3D2B1F' }}
+          >
+            {foto.descripcion}
+          </p>
+          {foto.lugar && (
+            <p className="font-hand text-sm" style={{ color: '#9B8B7A', fontSize: 14 }}>
+              📍 {foto.lugar}
+            </p>
+          )}
+          <p className="font-hand text-xs mt-1" style={{ color: '#D4C4B0', fontSize: 12 }}>
+            {foto.fecha}
+          </p>
+        </div>
       </div>
 
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-semibold text-gray-800">{foto.descripcion}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{foto.fecha} {foto.lugar && `· ${foto.lugar}`}</p>
-          </div>
-          <button onClick={onDelete} className="text-gray-300 text-sm flex-shrink-0">✕</button>
-        </div>
-
-        {/* Notas post-it */}
-        {foto.notas?.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3">
-            {foto.notas.map(n => (
-              <PostIt
-                key={n.id}
-                nota={n}
-                onDelete={() => onAddNota(foto.id, null, n.id)}
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={() => setShowNotaForm(v => !v)}
-            className="flex-1 py-2 rounded-xl text-sm border flex items-center justify-center gap-1.5 transition-all"
-            style={{ borderColor: '#FFB6C1', color: '#FF6B6B' }}
-          >
-            📝 Nota
-          </button>
-          <button
-            onClick={() => setShowStickers(v => !v)}
-            className="flex-1 py-2 rounded-xl text-sm border flex items-center justify-center gap-1.5 transition-all"
-            style={{ borderColor: '#4ECDC4', color: '#4ECDC4' }}
-          >
-            ✨ Sticker
-          </button>
-        </div>
-
-        {showStickers && (
-          <div className="flex flex-wrap gap-2 mt-3 p-3 rounded-2xl" style={{ background: '#F7F3E9' }}>
-            {STICKERS.map(s => (
-              <button
-                key={s}
-                onClick={() => {
-                  onAddSticker(foto.id, s)
-                  setShowStickers(false)
-                }}
-                className="text-2xl"
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {showNotaForm && (
-          <div className="mt-3 flex flex-col gap-2">
-            <textarea
-              className="w-full border border-gray-200 rounded-2xl p-3 text-sm resize-none outline-none focus:border-pink-300"
-              rows={2}
-              placeholder="Escribí algo lindo sobre este momento..."
-              value={notaTexto}
-              onChange={e => setNotaTexto(e.target.value)}
+      {/* Post-its */}
+      {foto.postits?.length > 0 && (
+        <div className="flex flex-wrap gap-3 px-2 justify-center">
+          {foto.postits.map(n => (
+            <PostIt
+              key={n.id}
+              nota={n}
+              onDelete={() => onAddPostit(foto.id, null, n.id)}
             />
-            <div className="flex gap-2">
-              <select
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white"
-                value={notaAutor}
-                onChange={e => setNotaAutor(e.target.value)}
-              >
-                <option value="Indi">Indi</option>
-                <option value="Yo">Yo</option>
-              </select>
+          ))}
+        </div>
+      )}
+
+      {/* Botones */}
+      <div className="flex gap-2 px-2">
+        <button
+          onClick={() => setShowPostitForm(v => !v)}
+          className="flex-1 py-3 rounded-2xl font-hand text-base transition-all"
+          style={{
+            fontSize: 16,
+            background: showPostitForm ? '#FFF4B8' : '#F2E8D9',
+            color: '#8B7355',
+            border: '1.5px solid #D4C4B0',
+          }}
+        >
+          📝 Post-it
+        </button>
+      </div>
+
+      {showPostitForm && (
+        <div
+          className="mx-2 rounded-2xl p-4 flex flex-col gap-3"
+          style={{ background: '#FFFDF5', border: '1.5px solid #D4C4B0' }}
+        >
+          <textarea
+            className="w-full rounded-xl p-3 resize-none outline-none font-hand text-base"
+            style={{ background: '#FFF4B8', border: 'none', color: '#3D2B1F', fontSize: 16, fontFamily: 'Caveat, cursive' }}
+            rows={2}
+            placeholder="Escribí algo lindo..."
+            value={postitTexto}
+            onChange={e => setPostitTexto(e.target.value)}
+            autoFocus
+          />
+          <div className="flex gap-2 items-center">
+            <span className="font-hand text-sm" style={{ color: '#8B7355' }}>de:</span>
+            {['Indi', 'Mati'].map(a => (
               <button
-                onClick={submitNota}
-                className="flex-1 py-2 rounded-xl text-sm text-white font-medium"
-                style={{ background: '#FF6B6B' }}
+                key={a}
+                onClick={() => setPostitAutor(a)}
+                className="px-4 py-2 rounded-xl font-hand text-base transition-all"
+                style={{
+                  fontSize: 15,
+                  background: postitAutor === a ? '#C4785A' : '#F2E8D9',
+                  color:      postitAutor === a ? 'white'   : '#8B7355',
+                  border:     '1.5px solid #D4C4B0',
+                }}
               >
-                Agregar ♥
+                {a}
               </button>
-            </div>
+            ))}
+            <button
+              onClick={submitPostit}
+              className="ml-auto px-5 py-2 rounded-xl font-hand text-base text-white transition-all"
+              style={{ fontSize: 15, background: '#C4785A' }}
+            >
+              Pegar ♥
+            </button>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Separador estilo cinta adhesiva */}
+      <div className="flex justify-center opacity-30 mt-1 mb-2">
+        <div className="w-16 h-1 rounded-full" style={{ background: '#8B7355' }} />
       </div>
     </div>
   )
@@ -150,8 +171,8 @@ function FotoCard({ foto, onDelete, onAddNota, onAddSticker }) {
 export default function Fotos() {
   const [fotos, setFotos] = useStorage('fotos', [])
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ descripcion: '', lugar: '' })
   const [preview, setPreview] = useState(null)
+  const [form, setForm] = useState({ descripcion: '', lugar: '' })
   const fileRef = useRef()
 
   function handleFile(e) {
@@ -164,106 +185,114 @@ export default function Fotos() {
 
   function agregarFoto() {
     if (!preview) return
+    const idx = fotos.length
     setFotos(prev => [{
       id: Date.now(),
       url: preview,
       descripcion: form.descripcion || 'Un momento especial',
       lugar: form.lugar,
-      fecha: new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long' }),
-      notas: [],
-      stickers: [],
+      fecha: new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }),
+      rotacion: ROTATIONS[idx % ROTATIONS.length],
+      postits: [],
     }, ...prev])
     setPreview(null)
     setForm({ descripcion: '', lugar: '' })
     setShowForm(false)
   }
 
-  function handleAddNota(fotoId, nota, deleteId) {
+  function handleAddPostit(fotoId, postit, deleteId) {
     setFotos(prev => prev.map(f => {
       if (f.id !== fotoId) return f
-      if (deleteId) return { ...f, notas: f.notas.filter(n => n.id !== deleteId) }
-      return { ...f, notas: [...(f.notas || []), nota] }
-    }))
-  }
-
-  function handleAddSticker(fotoId, emoji) {
-    setFotos(prev => prev.map(f => {
-      if (f.id !== fotoId) return f
-      const sticker = {
-        emoji,
-        x: 10 + Math.random() * 70,
-        y: 10 + Math.random() * 70,
-      }
-      return { ...f, stickers: [...(f.stickers || []), sticker] }
+      if (deleteId) return { ...f, postits: f.postits.filter(n => n.id !== deleteId) }
+      return { ...f, postits: [...(f.postits || []), postit] }
     }))
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-4">
-      <div className="mx-4 mt-4 flex items-center justify-between">
-        <h2 className="text-xl font-bold" style={{ color: '#FF6B6B' }}>📸 Fototeca</h2>
+    <div className="flex flex-col gap-1 py-4">
+      {/* Botón agregar */}
+      <div className="px-4 mb-4">
         <button
           onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-2xl text-sm text-white font-medium shadow-sm"
-          style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
+          className="w-full py-4 rounded-2xl font-hand text-lg font-bold transition-all active:scale-95"
+          style={{
+            fontSize: 18,
+            background: '#FFFDF5',
+            color: '#C4785A',
+            border: '2px dashed #D4A0A0',
+          }}
         >
-          + Foto
+          + Agregar foto 📸
         </button>
       </div>
 
       {fotos.length === 0 ? (
-        <div className="mx-4 flex flex-col items-center justify-center py-16 text-gray-400">
-          <span className="text-5xl mb-4">📷</span>
-          <p className="text-center">Todavía no hay fotos.<br />¡Capturá el primer momento!</p>
+        <div className="flex flex-col items-center justify-center py-20 px-8 text-center" style={{ color: '#9B8B7A' }}>
+          <p className="text-6xl mb-5">📷</p>
+          <p className="font-hand text-xl" style={{ color: '#8B7355' }}>El álbum está vacío</p>
+          <p className="font-hand text-base mt-2">¡Agregá la primera foto del viaje!</p>
         </div>
       ) : (
-        <div className="mx-4 flex flex-col gap-4">
+        <div className="flex flex-col gap-2 px-4">
           {fotos.map(f => (
-            <FotoCard
+            <PolaroidCard
               key={f.id}
               foto={f}
               onDelete={() => setFotos(prev => prev.filter(x => x.id !== f.id))}
-              onAddNota={handleAddNota}
-              onAddSticker={handleAddSticker}
+              onAddPostit={handleAddPostit}
             />
           ))}
         </div>
       )}
 
-      {/* Modal agregar foto */}
+      {/* Modal nueva foto */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-end" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full bg-white rounded-t-3xl p-6 flex flex-col gap-4">
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{ background: 'rgba(61,43,31,0.55)' }}
+          onClick={e => { if (e.target === e.currentTarget) { setShowForm(false); setPreview(null) } }}
+        >
+          <div
+            className="w-full rounded-t-3xl p-6 flex flex-col gap-5"
+            style={{ background: '#FFFDF5', maxHeight: '92dvh', overflowY: 'auto' }}
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold" style={{ fontFamily: 'Comfortaa', color: '#FF6B6B' }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic', fontSize: 20 }}>
                 Nueva foto
-              </h3>
-              <button onClick={() => { setShowForm(false); setPreview(null) }} className="text-gray-400 text-xl">✕</button>
+              </h2>
+              <button onClick={() => { setShowForm(false); setPreview(null) }} style={{ color: '#9B8B7A', fontSize: 22 }}>✕</button>
             </div>
 
+            {/* Zona foto */}
             <div
-              className="w-full h-48 rounded-2xl flex items-center justify-center border-2 border-dashed overflow-hidden cursor-pointer"
-              style={{ borderColor: preview ? 'transparent' : '#FFB6C1' }}
+              className="w-full rounded-2xl overflow-hidden flex items-center justify-center cursor-pointer transition-all"
+              style={{
+                height: 220,
+                background: '#F2E8D9',
+                border: preview ? 'none' : '2px dashed #D4C4B0',
+              }}
               onClick={() => fileRef.current.click()}
             >
               {preview
-                ? <img src={preview} className="w-full h-full object-cover rounded-2xl" alt="preview" />
-                : <div className="text-center text-gray-400">
-                    <p className="text-4xl mb-2">📸</p>
-                    <p className="text-sm">Tocá para elegir foto</p>
+                ? <img src={preview} className="w-full h-full object-cover" alt="preview" />
+                : <div className="text-center" style={{ color: '#9B8B7A' }}>
+                    <p className="text-5xl mb-2">📸</p>
+                    <p className="font-hand text-lg">Tocá para elegir una foto</p>
                   </div>
               }
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
 
             <input
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none focus:border-pink-300"
-              placeholder="¿Qué pasó acá? (opcional)"
+              className="w-full rounded-2xl px-5 py-4 outline-none font-hand text-lg"
+              style={{ background: '#F2E8D9', border: '1.5px solid #D4C4B0', color: '#3D2B1F', fontFamily: 'Caveat, cursive', fontSize: 18 }}
+              placeholder="¿Qué pasó acá?"
               value={form.descripcion}
               onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))}
             />
             <input
-              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base outline-none focus:border-pink-300"
+              className="w-full rounded-2xl px-5 py-4 outline-none font-hand text-lg"
+              style={{ background: '#F2E8D9', border: '1.5px solid #D4C4B0', color: '#3D2B1F', fontFamily: 'Caveat, cursive', fontSize: 18 }}
               placeholder="Lugar (opcional)"
               value={form.lugar}
               onChange={e => setForm(f => ({ ...f, lugar: e.target.value }))}
@@ -272,10 +301,10 @@ export default function Fotos() {
             <button
               onClick={agregarFoto}
               disabled={!preview}
-              className="w-full py-4 rounded-2xl text-white font-bold text-base transition-all active:scale-95 disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg, #FF6B6B, #FF9ECD)' }}
+              className="w-full py-5 rounded-2xl font-hand text-lg font-bold text-white transition-all active:scale-95 disabled:opacity-40"
+              style={{ fontSize: 18, background: '#C4785A', boxShadow: '0 4px 12px rgba(196,120,90,0.3)' }}
             >
-              Guardar foto 📸
+              Guardar en el álbum 📸
             </button>
           </div>
         </div>
