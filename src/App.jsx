@@ -14,6 +14,7 @@ const TITLES = {
 
 export default function App() {
   const [seccion, setSeccion] = useState('gastos')
+  const sinHeader = seccion === 'mapa'
 
   function renderSeccion() {
     switch (seccion) {
@@ -25,26 +26,32 @@ export default function App() {
     }
   }
 
-  const sinHeader = seccion === 'mapa'
-
   return (
-    <div className="flex flex-col min-h-dvh parchment-bg">
+    <div
+      className="flex flex-col min-h-dvh"
+      style={{ background: '#FAF6EF' }}
+    >
       {!sinHeader && (
         <header
           className="sticky top-0 z-30 px-5 py-4"
           style={{
-            background: '#FFFDF5',
-            borderBottom: '2px solid #D4C4B0',
+            background: '#FFFFFF',
+            borderBottom: '1.5px solid #D4C4B0',
             boxShadow: '0 2px 8px rgba(61,43,31,0.06)',
           }}
         >
           <h1
-            className="text-xl"
-            style={{ fontFamily: 'Playfair Display, serif', color: '#3D2B1F', fontStyle: 'italic' }}
+            style={{
+              fontFamily: 'Playfair Display, serif',
+              fontStyle: 'italic',
+              fontSize: 22,
+              color: '#3D2B1F',
+              fontWeight: 500,
+            }}
           >
             {TITLES[seccion]}
           </h1>
-          <p className="font-hand text-sm mt-0.5" style={{ color: '#C4785A', fontSize: 14 }}>
+          <p style={{ fontSize: 13, color: '#C4785A', marginTop: 2, fontFamily: 'Lato, sans-serif' }}>
             Indi & Mati · MdP 2025
           </p>
         </header>
@@ -52,7 +59,7 @@ export default function App() {
 
       <main
         className="flex-1 overflow-y-auto"
-        style={{ paddingBottom: seccion === 'mapa' ? 64 : 80 }}
+        style={{ paddingBottom: seccion === 'mapa' ? 60 : 80 }}
       >
         {renderSeccion()}
       </main>
