@@ -186,121 +186,112 @@ export default function Gastos() {
             className="w-full"
             style={{
               background: '#FFFFFF', borderRadius: '24px 24px 0 0',
-              maxHeight: '92dvh', display: 'flex', flexDirection: 'column',
+              maxHeight: '92dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch',
+              padding: '24px 20px',
+              paddingBottom: 'calc(32px + env(safe-area-inset-bottom, 0px))',
+              display: 'flex', flexDirection: 'column', gap: 18,
             }}
           >
-            {/* Contenido scrolleable */}
-            <div style={{
-              overflowY: 'auto', WebkitOverflowScrolling: 'touch',
-              padding: '24px 20px 16px', display: 'flex', flexDirection: 'column', gap: 18, flex: 1,
-            }}>
-              {/* Título */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                <h2 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#3D2B1F' }}>
-                  Nuevo gasto
-                </h2>
-                <button onClick={() => setShowForm(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#9B8B7A', lineHeight: 1, padding: 4 }}>
-                  ✕
-                </button>
-              </div>
-
-              {/* Descripción */}
-              <input style={inputStyle} placeholder="Descripción (ej: Almuerzo en el puerto)"
-                value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
-
-              {/* Monto */}
-              <input type="number" style={inputStyle} placeholder="Monto $"
-                value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
-
-              {/* Pagador */}
-              <div>
-                <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>¿Quién pagó?</p>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {['Indi', 'Mati'].map(p => (
-                    <button key={p} onClick={() => setForm(f => ({ ...f, pagador: p }))}
-                      style={{
-                        flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 16, fontWeight: 700,
-                        padding: '14px 0', borderRadius: 14, border: '1.5px solid',
-                        cursor: 'pointer', transition: 'all 0.15s',
-                        background: form.pagador === p ? '#C4785A' : '#FAF6EF',
-                        color:      form.pagador === p ? 'white'   : '#8B7355',
-                        borderColor: form.pagador === p ? '#C4785A' : '#D4C4B0',
-                      }}>
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Categoría */}
-              <div>
-                <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>Categoría</p>
-                <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
-                  {CATEGORIAS.map(c => (
-                    <button key={c.id} onClick={() => setForm(f => ({ ...f, categoria: c.id }))}
-                      style={{
-                        flexShrink: 0, fontFamily: 'Lato, sans-serif', fontSize: 14,
-                        padding: '10px 14px', borderRadius: 50, border: '1.5px solid', cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        background:  form.categoria === c.id ? c.color  : '#FAF6EF',
-                        color:       form.categoria === c.id ? 'white'  : '#8B7355',
-                        borderColor: form.categoria === c.id ? c.color  : '#D4C4B0',
-                      }}>
-                      {c.emoji} {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* División */}
-              <div>
-                <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>División</p>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {[['50/50', '50 / 50'], ['custom', 'Personalizado']].map(([val, label]) => (
-                    <button key={val} onClick={() => setForm(f => ({ ...f, division: val }))}
-                      style={{
-                        flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 15,
-                        padding: '13px 0', borderRadius: 14, border: '1.5px solid', cursor: 'pointer',
-                        background:  form.division === val ? '#8B7355' : '#FAF6EF',
-                        color:       form.division === val ? 'white'   : '#8B7355',
-                        borderColor: form.division === val ? '#8B7355' : '#D4C4B0',
-                      }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {form.division === 'custom' && (
-                  <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                    {[['customIndi', 'Parte Indi $'], ['customMati', 'Parte Mati $']].map(([key, ph]) => (
-                      <input key={key} type="number"
-                        style={{ ...inputStyle, flex: 1, width: 'auto' }}
-                        placeholder={ph}
-                        value={form[key]}
-                        onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Botón fijo al fondo del modal */}
-            <div style={{
-              padding: '12px 20px',
-              paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
-              borderTop: '1.5px solid #FAF6EF', background: '#FFFFFF', flexShrink: 0,
-            }}>
-              <button onClick={agregar}
-                style={{
-                  fontFamily: 'Lato, sans-serif', fontSize: 17, fontWeight: 700,
-                  padding: '17px', borderRadius: 16, background: '#C4785A', color: 'white',
-                  border: 'none', cursor: 'pointer', width: '100%',
-                  boxShadow: '0 4px 12px rgba(196,120,90,0.3)',
-                }}>
-                Agregar gasto 💸
+            {/* Título */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: 22, color: '#3D2B1F' }}>
+                Nuevo gasto
+              </h2>
+              <button onClick={() => setShowForm(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#9B8B7A', lineHeight: 1, padding: 4 }}>
+                ✕
               </button>
             </div>
+
+            {/* Descripción */}
+            <input style={inputStyle} placeholder="Descripción (ej: Almuerzo en el puerto)"
+              value={form.descripcion} onChange={e => setForm(f => ({ ...f, descripcion: e.target.value }))} />
+
+            {/* Monto */}
+            <input type="number" style={inputStyle} placeholder="Monto $"
+              value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} />
+
+            {/* Pagador */}
+            <div>
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>¿Quién pagó?</p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                {['Indi', 'Mati'].map(p => (
+                  <button key={p} onClick={() => setForm(f => ({ ...f, pagador: p }))}
+                    style={{
+                      flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 16, fontWeight: 700,
+                      padding: '14px 0', borderRadius: 14, border: '1.5px solid',
+                      cursor: 'pointer', transition: 'all 0.15s',
+                      background: form.pagador === p ? '#C4785A' : '#FAF6EF',
+                      color:      form.pagador === p ? 'white'   : '#8B7355',
+                      borderColor: form.pagador === p ? '#C4785A' : '#D4C4B0',
+                    }}>
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Categoría */}
+            <div>
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>Categoría</p>
+              <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
+                {CATEGORIAS.map(c => (
+                  <button key={c.id} onClick={() => setForm(f => ({ ...f, categoria: c.id }))}
+                    style={{
+                      flexShrink: 0, fontFamily: 'Lato, sans-serif', fontSize: 14,
+                      padding: '10px 14px', borderRadius: 50, border: '1.5px solid', cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      background:  form.categoria === c.id ? c.color  : '#FAF6EF',
+                      color:       form.categoria === c.id ? 'white'  : '#8B7355',
+                      borderColor: form.categoria === c.id ? c.color  : '#D4C4B0',
+                    }}>
+                    {c.emoji} {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* División */}
+            <div>
+              <p style={{ fontFamily: 'Lato, sans-serif', color: '#8B7355', fontSize: 14, marginBottom: 10 }}>División</p>
+              <div style={{ display: 'flex', gap: 12 }}>
+                {[['50/50', '50 / 50'], ['custom', 'Personalizado']].map(([val, label]) => (
+                  <button key={val} onClick={() => setForm(f => ({ ...f, division: val }))}
+                    style={{
+                      flex: 1, fontFamily: 'Lato, sans-serif', fontSize: 15,
+                      padding: '13px 0', borderRadius: 14, border: '1.5px solid', cursor: 'pointer',
+                      background:  form.division === val ? '#8B7355' : '#FAF6EF',
+                      color:       form.division === val ? 'white'   : '#8B7355',
+                      borderColor: form.division === val ? '#8B7355' : '#D4C4B0',
+                    }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {form.division === 'custom' && (
+                <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                  {[['customIndi', 'Parte Indi $'], ['customMati', 'Parte Mati $']].map(([key, ph]) => (
+                    <input key={key} type="number"
+                      style={{ ...inputStyle, flex: 1, width: 'auto' }}
+                      placeholder={ph}
+                      value={form[key]}
+                      onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Confirmar */}
+            <button onClick={agregar}
+              style={{
+                fontFamily: 'Lato, sans-serif', fontSize: 17, fontWeight: 700,
+                padding: '17px', borderRadius: 16, background: '#C4785A', color: 'white',
+                border: 'none', cursor: 'pointer', width: '100%',
+                boxShadow: '0 4px 12px rgba(196,120,90,0.3)',
+              }}>
+              Agregar gasto 💸
+            </button>
           </div>
         </div>
       )}
