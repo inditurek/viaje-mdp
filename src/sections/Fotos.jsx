@@ -54,7 +54,7 @@ function PolaroidCard({ foto, onDelete, onAddPostit }) {
   }
 
   return (
-    <div style={{ transform: `rotate(${foto.rotacion}deg)`, transformOrigin: 'center', marginBottom: 12, width: '100%' }}>
+    <div style={{ marginBottom: 12, width: '100%' }}>
       {/* Polaroid */}
       <div className="polaroid" style={{ position: 'relative', width: '100%' }}>
         <button onClick={onDelete}

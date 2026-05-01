@@ -55,7 +55,7 @@ export default function App() {
             {TITLES[seccion]}
           </h1>
           <p style={{ fontSize: 13, color: '#C4785A', marginTop: 2, fontFamily: 'Lato, sans-serif' }}>
-            Indi & Mati · MdP 2025
+            Indi & Mati · MDQ 2026
           </p>
         </header>
       )}

@@ -63,9 +63,9 @@ function FrascoSVG({ count, onClickPapelito, recuerdos }) {
       <path d="M 68 88 Q 55 105 50 130 Q 53 132 57 130 Q 60 105 74 90 Z" fill="rgba(255,255,255,0.35)" />
 
       <rect x={58} y={142} width={84} height={56} rx={5} fill="rgba(250,246,239,0.92)" stroke="#C4A882" strokeWidth={1.5} />
-      <text x={100} y={165} textAnchor="middle" fill="#8B7355" fontSize={9} fontFamily="Lato, sans-serif" fontWeight={700}>recuerdos</text>
+      <text x={100} y={165} textAnchor="middle" fill="#8B7355" fontSize={9} fontFamily="Lato, sans-serif" fontWeight={700}>Recuerdos</text>
       <text x={100} y={179} textAnchor="middle" fill="#8B7355" fontSize={8} fontFamily="Lato, sans-serif">del viaje ♥</text>
-      <text x={100} y={192} textAnchor="middle" fill="#C4A882" fontSize={7} fontFamily="Lato, sans-serif">MdP · 2025</text>
+      <text x={100} y={192} textAnchor="middle" fill="#C4A882" fontSize={7} fontFamily="Lato, sans-serif">MDQ · 2026</text>
 
       <path d="M 62 78 Q 100 70 138 78 L 136 66 Q 100 58 64 66 Z"
         fill="rgba(255,253,245,0.4)" stroke="#C4A882" strokeWidth={2.5} />
@@ -225,7 +225,6 @@ export default function Recuerdos() {
                   style={{
                     borderRadius: 20, padding: '18px 20px', position: 'relative', cursor: 'pointer',
                     background: r.color || PAPELITO_COLORS[i % PAPELITO_COLORS.length],
-                    transform: `rotate(${r.rot || 0}deg)`,
                     boxShadow: '1px 3px 8px rgba(61,43,31,0.1)',
                   }}
                   onClick={() => setSeleccionado(r)}
@@ -260,7 +259,6 @@ export default function Recuerdos() {
           <div style={{
             width: '100%', maxWidth: 340, borderRadius: 24, padding: '28px 24px', position: 'relative',
             background: seleccionado.color || '#FFF4B8',
-            transform: `rotate(${seleccionado.rot || 0}deg)`,
             boxShadow: '0 8px 40px rgba(61,43,31,0.3)',
           }} onClick={e => e.stopPropagation()}>
             <p style={{ ...PLAYFAIR, fontSize: 20, color: '#3D2B1F', lineHeight: 1.5 }}>{seleccionado.texto}</p>
